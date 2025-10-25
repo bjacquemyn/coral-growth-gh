@@ -43,39 +43,14 @@ else:
     start_tuple = (0, 0, 0)  # Default starting point
 
 # Call the growth algorithm with plain tuple
-# Use try/except to provide defaults for optional parameters
-try:
-    iter_val = iterations
-except NameError:
-    iter_val = 5
-
-try:
-    length_val = branch_length
-except NameError:
-    length_val = 2.0
-
-try:
-    angle_val = branch_angle
-except NameError:
-    angle_val = 25
-
-try:
-    prob_val = split_probability
-except NameError:
-    prob_val = 0.7
-
-try:
-    seed_val = seed
-except NameError:
-    seed_val = None
-
+# Use globals().get() to provide defaults for optional parameters
 segments = grow_coral(
     start=start_tuple,
-    iterations=iter_val,
-    branch_length=length_val,
-    branch_angle=angle_val,
-    split_probability=prob_val,
-    seed=seed_val
+    iterations=globals().get('iterations', 5),
+    branch_length=globals().get('branch_length', 2.0),
+    branch_angle=globals().get('branch_angle', 25),
+    split_probability=globals().get('split_probability', 0.7),
+    seed=globals().get('seed', None)
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
