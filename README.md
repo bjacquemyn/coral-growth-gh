@@ -48,11 +48,16 @@ if gh_dir:
 
 ```python
 from coral.growth_models.simple_branching import grow_coral
+import Rhino.Geometry as rg
 
-# Example: grow from a starting point
-start_point = (0, 0, 0)
+# IMPORTANT: In Grasshopper, you'll receive a Point3d from input wires.
+# Convert it to a tuple at the component boundary:
+# Assuming 'start' is a GhPython input parameter connected to a Point
+start_tuple = (start.X, start.Y, start.Z)  # Point3d -> tuple
+
+# Now call the growth algorithm with the tuple
 branches = grow_coral(
-    start=start_point,
+    start=start_tuple,
     iterations=5,
     branch_length=2.0,
     branch_angle=25,
@@ -60,17 +65,17 @@ branches = grow_coral(
 )
 
 # branches is a list of line segments (tuples of start/end points)
-# You can convert these to Rhino geometry for display
 ```
 
 ### 3. Convert output to Rhino geometry
 
 ```python
-import Rhino.Geometry as rg
-
+# Convert the tuple-based segments back to Rhino geometry for display
 lines = [rg.Line(rg.Point3d(*seg[0]), rg.Point3d(*seg[1])) for seg in branches]
 # Assign 'lines' to an output parameter
 ```
+
+**Why this pattern?** The coral growth algorithm uses plain Python tuples to stay library-agnostic. By converting Point3d to tuple at the component boundary, the script stays friendly to normal Grasshopper wires (Point inputs) while keeping the core function reusable in other contexts.
 
 ## How to test without Grasshopper
 
