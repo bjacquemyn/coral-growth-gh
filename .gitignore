@@ -1,0 +1,22 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Rhino / Grasshopper temp and backups
+*.rui_bak
+*.rhl
+*.ghuser.tmp
+*.ghcache
+*.bak
+~$*
+
+# Large or generated artifacts
+data/exports/
+renders/
+screenshots/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
