@@ -21,12 +21,14 @@ import sys
 import os
 
 # Add python/ to path
-gh_path = ghenv.Component.OnPingDocument().FilePath
-if gh_path:
-    repo_root = os.path.dirname(gh_path)
-    python_dir = os.path.join(repo_root, "python")
-    if python_dir not in sys.path:
-        sys.path.insert(0, python_dir)
+gh_doc = ghenv.Component.OnPingDocument()
+if gh_doc:
+    gh_path = gh_doc.FilePath
+    if gh_path:
+        repo_root = os.path.dirname(gh_path)
+        python_dir = os.path.join(repo_root, "python")
+        if python_dir not in sys.path:
+            sys.path.insert(0, python_dir)
 
 # Import coral growth algorithm
 from coral.growth_models.simple_branching import grow_coral
@@ -41,13 +43,39 @@ else:
     start_tuple = (0, 0, 0)  # Default starting point
 
 # Call the growth algorithm with plain tuple
+# Use try/except to provide defaults for optional parameters
+try:
+    iter_val = iterations
+except NameError:
+    iter_val = 5
+
+try:
+    length_val = branch_length
+except NameError:
+    length_val = 2.0
+
+try:
+    angle_val = branch_angle
+except NameError:
+    angle_val = 25
+
+try:
+    prob_val = split_probability
+except NameError:
+    prob_val = 0.7
+
+try:
+    seed_val = seed
+except NameError:
+    seed_val = None
+
 segments = grow_coral(
     start=start_tuple,
-    iterations=iterations if 'iterations' in dir() and iterations else 5,
-    branch_length=branch_length if 'branch_length' in dir() and branch_length else 2.0,
-    branch_angle=branch_angle if 'branch_angle' in dir() and branch_angle else 25,
-    split_probability=split_probability if 'split_probability' in dir() and split_probability else 0.7,
-    seed=seed if 'seed' in dir() and seed else None
+    iterations=iter_val,
+    branch_length=length_val,
+    branch_angle=angle_val,
+    split_probability=prob_val,
+    seed=seed_val
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
