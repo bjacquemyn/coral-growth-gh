@@ -6,5 +6,6 @@ with a consistent interface for easy swapping in Grasshopper.
 """
 
 from . import simple_branching
+from . import fungal_surface
 
-__all__ = ['simple_branching']
+__all__ = ['simple_branching', 'fungal_surface']
