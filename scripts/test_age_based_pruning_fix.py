@@ -1,8 +1,9 @@
 """
-Test that age-based pruning doesn't prematurely prune stems during stem_generations.
+Test the stem_generations parameter for coral growth.
 
-This test validates the fix for the issue where the generation counting logic
-caused too rapid pruning of the main stem before branching could occur.
+This test validates that the stem_generations parameter correctly
+prevents branching during the initial generations, creating a main
+stem before allowing branches to form.
 """
 
 import sys
@@ -14,6 +15,9 @@ python_dir = os.path.join(repo_root, "python")
 sys.path.insert(0, python_dir)
 
 from coral.growth_models.simple_branching import grow_coral
+
+# Floating point comparison tolerance
+FLOAT_TOLERANCE = 1e-9
 
 
 def test_stem_survives_with_age_based_pruning():
@@ -53,7 +57,7 @@ def test_stem_survives_with_age_based_pruning():
         end_pt = segments[i][1]
         # Find segments that start near this endpoint
         next_segs = [s for s in segments[i+1:i+3] 
-                     if all(abs(s[0][j] - end_pt[j]) < 1e-9 for j in range(3))]
+                     if all(abs(s[0][j] - end_pt[j]) < FLOAT_TOLERANCE for j in range(3))]
         assert len(next_segs) > 0, \
             "Segment {} should connect to next segment".format(i)
     
@@ -157,7 +161,7 @@ def test_comparison_with_without_fix():
     """
     Demonstrate the improvement from the fix.
     
-    This test shows what would have happened before vs after the fix.
+    This test shows that the fix allows significant growth compared to before.
     """
     print("\nDemonstrating the fix improvement...")
     
@@ -176,7 +180,7 @@ def test_comparison_with_without_fix():
     print("    stem_generations: {}".format(config['stem_generations']))
     print("    age_based_prune: {}".format(config['age_based_prune']))
     print()
-    print("  Before fix: ~3 segments (stem pruned prematurely)")
+    print("  Before fix: Very few segments (stem pruned prematurely)")
     print("  After fix: {} segments (stem survives to branch)".format(len(segments)))
     print()
     print("  ✓ Significant improvement in segment generation")

@@ -189,9 +189,9 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                     else:
                         segments.append((tip_point, end_trunk))
                         endpoints.append(end_trunk)
-                        # When trunk branches (after stem_generations), reset its generation_born
-                        # to prevent accumulated age from stem phase
-                        new_generation_born = iteration if iteration >= stem_generations else generation_born
+                        # Reset trunk's generation_born to keep it young (prevents premature pruning)
+                        # This applies both during and after stem_generations phase
+                        new_generation_born = iteration
                         new_tips.append((end_trunk, new_dir_trunk, True, new_generation_born, new_twist_angle))
 
                     # Branch child (wide angle)
@@ -258,9 +258,9 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                 else:
                     segments.append((tip_point, end_point))
                     endpoints.append(end_point)
-                    # During stem_generations, reset generation_born to prevent age-based pruning
-                    # from affecting the main stem before branching begins
-                    new_generation_born = iteration if (is_trunk and iteration < stem_generations) else generation_born
+                    # Reset trunk's generation_born to keep it young
+                    # This prevents age-based pruning from affecting the main stem
+                    new_generation_born = iteration if is_trunk else generation_born
                     new_tips.append((end_point, new_direction, is_trunk, new_generation_born, new_twist_angle))
         
         # Update tips for next iteration
