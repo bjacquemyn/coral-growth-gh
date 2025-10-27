@@ -11,6 +11,7 @@ INPUTS:
   branch_angle: float - Maximum deviation angle in degrees (default: 25)
   split_probability: float - Probability of branching (0-1, default: 0.7)
   seed: int - Random seed for reproducibility (optional)
+  stem_generations: int - Generations forced to single stem before branching (default: 0)
 
 OUTPUTS:
   lines: List of Curve objects (LineCurve) for visualization
@@ -137,6 +138,7 @@ branch_length_val = _as_float(globals().get('branch_length', None), 2.0)
 branch_angle_val = _as_float(globals().get('branch_angle', None), 25)
 split_prob_val = _as_prob(globals().get('split_probability', None), 0.7)
 seed_val = _as_seed(globals().get('seed', None))
+stem_generations_val = max(0, _as_int(globals().get('stem_generations', None), 0))
 
 segments_raw = grow_coral(
     start=start_tuple,
@@ -145,6 +147,7 @@ segments_raw = grow_coral(
     branch_angle=branch_angle_val,
     split_probability=split_prob_val,
     seed=seed_val,
+    stem_generations=stem_generations_val,
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
