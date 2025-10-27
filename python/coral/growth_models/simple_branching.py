@@ -14,7 +14,7 @@ import random
 
 
 def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0, 
-               branch_angle=25, split_probability=0.7, seed=None):
+               branch_angle=25, split_probability=0.7, seed=None, stem_generations=0):
     """
     Generate a branching coral structure.
     
@@ -32,6 +32,9 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
         Probability (0-1) that a branch tip will split into two branches.
     seed : int, optional
         Random seed for reproducible results.
+    stem_generations : int, optional
+        Number of initial generations that must grow as a single stem before 
+        branching is allowed. Default is 0 (branching allowed immediately).
     
     Returns
     -------
@@ -54,7 +57,11 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
         
         for tip_point, tip_direction in tips:
             # Decide if this tip should split
-            if random.random() < split_probability:
+            # During stem generations, force single stem growth (no branching)
+            if iteration < stem_generations:
+                # Stem generation: no branching allowed
+                num_children = 1
+            elif random.random() < split_probability:
                 # Create two child branches
                 num_children = 2
             else:
