@@ -61,7 +61,8 @@ branches = grow_coral(
     iterations=5,
     branch_length=2.0,
     branch_angle=25,
-    split_probability=0.7
+    split_probability=0.7,
+    stem_generations=3  # NEW: Force 3 generations of single stem before branching
 )
 
 # branches is a list of line segments (tuples of start/end points)
@@ -76,6 +77,24 @@ lines = [rg.Line(rg.Point3d(*seg[0]), rg.Point3d(*seg[1])) for seg in branches]
 ```
 
 **Why this pattern?** The coral growth algorithm uses plain Python tuples to stay library-agnostic. By converting Point3d to tuple at the component boundary, the script stays friendly to normal Grasshopper wires (Point inputs) while keeping the core function reusable in other contexts.
+
+### Understanding the stem_generations parameter
+
+The `stem_generations` parameter controls how many initial generations must grow as a single main stem before branching is allowed:
+
+- **`stem_generations=0` (default)**: Branching can occur from the very first generation, creating a bushy structure from the base
+- **`stem_generations=3`**: Forces the first 3 generations to grow as a single stem, creating a trunk-like structure before branches form
+
+**Example comparison:**
+```python
+# Without stem: branches immediately (bushy)
+bushy = grow_coral(iterations=5, split_probability=0.8, stem_generations=0)
+
+# With stem: creates main trunk first (tree-like)
+trunk = grow_coral(iterations=5, split_probability=0.8, stem_generations=3)
+```
+
+Use `stem_generations` to create more realistic tree or coral forms with a clear main stem structure!
 
 ## How to test without Grasshopper
 
