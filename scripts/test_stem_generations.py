@@ -16,6 +16,9 @@ sys.path.insert(0, python_dir)
 
 from coral.growth_models.simple_branching import grow_coral
 
+# Floating point comparison tolerance
+FLOAT_TOLERANCE = 1e-9
+
 
 def test_default_behavior():
     """Test that default behavior (stem_generations=0) allows immediate branching."""
@@ -70,7 +73,7 @@ def test_stem_generations_basic():
     # Check that second segment starts where first segment ends
     for i in range(3):
         diff = abs(first_seg_end[i] - second_seg_start[i])
-        assert diff < 1e-9, "Second segment should start where first segment ends"
+        assert diff < FLOAT_TOLERANCE, "Second segment should start where first segment ends"
     
     print("  ✓ stem_generations=2 creates a main stem before branching")
 
@@ -155,7 +158,7 @@ def test_stem_equals_iterations():
         start_pt = segments[i + 1][0]
         for j in range(3):
             diff = abs(end_pt[j] - start_pt[j])
-            assert diff < 1e-9, "Segments should form continuous line"
+            assert diff < FLOAT_TOLERANCE, "Segments should form continuous line"
     
     print("  ✓ Edge case handled correctly")
 

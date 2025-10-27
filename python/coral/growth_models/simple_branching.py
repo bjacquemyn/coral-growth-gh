@@ -172,8 +172,9 @@ def normalize(vector):
 
 # Example usage for quick testing
 if __name__ == "__main__":
-    # Generate a small coral structure
-    result = grow_coral(
+    # Generate a small coral structure without stem (default)
+    print("Example 1: Default behavior (immediate branching)")
+    result1 = grow_coral(
         start=(0, 0, 0),
         iterations=4,
         branch_length=1.5,
@@ -181,8 +182,21 @@ if __name__ == "__main__":
         split_probability=0.6,
         seed=42
     )
+    print("Generated {} branch segments".format(len(result1)))
     
-    print("Generated {} branch segments".format(len(result)))
-    print("\nFirst 5 segments:")
-    for i, seg in enumerate(result[:5]):
+    # Generate with stem
+    print("\nExample 2: With stem_generations=2 (main stem first)")
+    result2 = grow_coral(
+        start=(0, 0, 0),
+        iterations=4,
+        branch_length=1.5,
+        branch_angle=30,
+        split_probability=0.6,
+        seed=42,
+        stem_generations=2
+    )
+    print("Generated {} branch segments".format(len(result2)))
+    
+    print("\nFirst 3 segments of example 2:")
+    for i, seg in enumerate(result2[:3]):
         print("  {}: {} -> {}".format(i, seg[0], seg[1]))
