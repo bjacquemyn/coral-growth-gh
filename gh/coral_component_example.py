@@ -12,11 +12,14 @@ INPUTS:
   split_probability: float - Probability of branching (0-1, default: 0.7)
   seed: int - Random seed for reproducibility (optional)
   stem_generations: int - Generations forced to single stem before branching (default: 0)
+  stem_angle: float - Max deviation angle for the main stem in degrees (optional; default: use branch_angle)
 
 OUTPUTS:
   lines: List of Curve objects (LineCurve) for visualization
   segments: Alias of 'lines' for convenience (Curve list)
   segments_raw: List of raw segment data (tuples)
+  end_segments: LineCurves that terminate the coral (no further branching)
+  end_points: Points at the tips of end_segments (Point3d list)
 """
 
 import sys
@@ -139,6 +142,11 @@ branch_angle_val = _as_float(globals().get('branch_angle', None), 25)
 split_prob_val = _as_prob(globals().get('split_probability', None), 0.7)
 seed_val = _as_seed(globals().get('seed', None))
 stem_generations_val = max(0, _as_int(globals().get('stem_generations', None), 0))
+stem_angle_val = globals().get('stem_angle', None)
+try:
+    stem_angle_val = None if stem_angle_val in (None, "", False) else float(stem_angle_val)
+except Exception:
+    stem_angle_val = None
 
 segments_raw = grow_coral(
     start=start_tuple,
@@ -148,6 +156,7 @@ segments_raw = grow_coral(
     split_probability=split_prob_val,
     seed=seed_val,
     stem_generations=stem_generations_val,
+    stem_angle=stem_angle_val,
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
@@ -158,8 +167,24 @@ for seg in segments_raw:
     end_pt = rg.Point3d(*seg[1])    # Tuple -> Point3d
     lines.append(rg.LineCurve(start_pt, end_pt))
 
+# Identify terminal segments (their end point never reappears as another segment's start)
+start_points = {seg[0] for seg in segments_raw}
+end_segments_list = []
+end_points_list = []
+seen_end_points = set()
+
+for seg, curve in zip(segments_raw, lines):
+    endpoint = seg[1]
+    if endpoint not in start_points:
+        end_segments_list.append(curve)
+        if endpoint not in seen_end_points:
+            end_points_list.append(rg.Point3d(*endpoint))
+            seen_end_points.add(endpoint)
+
 # Backward/compat outputs:
 # - 'segments' outputs curves as well (for users already wiring this output into a Curve param)
 # - 'segments_raw' exposes the tuple data for debugging/analysis
 segments = lines
 segments_raw = segments_raw
+end_segments = end_segments_list
+end_points = end_points_list
