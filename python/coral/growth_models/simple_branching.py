@@ -112,8 +112,12 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                     surviving_tips.append(tip)
                     continue
 
-                prune_probability = min(1.0, age_based_prune * age)
-                if random.random() < prune_probability:
+                # The probability of surviving this single year is (1 - age_based_prune).
+                # The probability of surviving up to 'age' is (1 - age_based_prune) ** age.
+                survival_probability = (1.0 - age_based_prune) ** age
+                
+                # Prune if a random roll is greater than the survival chance.
+                if random.random() > survival_probability:
                     continue
 
                 surviving_tips.append(tip)
@@ -248,10 +252,12 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                 if avoid_radius > 0 and _too_close_to_existing(end_point, endpoints, avoid_radius):
                     # Skip this branch
                     pass
-                    else:
-                        segments.append((tip_point, end_point))
-                        endpoints.append(end_point)
-                        new_tips.append((end_point, new_direction, is_trunk, iteration, new_twist_angle))        # Update tips for next iteration
+                else:
+                    segments.append((tip_point, end_point))
+                    endpoints.append(end_point)
+                    new_tips.append((end_point, new_direction, is_trunk, generation_born, new_twist_angle))
+        
+        # Update tips for next iteration
         tips = new_tips
         
         # If no tips left, stop early
