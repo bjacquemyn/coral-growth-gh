@@ -159,20 +159,6 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
 
             # Update twist angle for this iteration
             new_twist_angle = twist_angle + twist_rate
-            # Decide if this tip should split
-            # During stem generations, force single stem growth (no branching)
-            if iteration < stem_generations:
-                # Stem generation: no branching allowed
-                num_children = 1
-            elif random.random() < split_probability:
-                # Create two child branches
-                num_children = 2
-            else:
-                # Single branch continues
-                num_children = 1
-
-            # Determine angles to use
-            trunk_angle = branch_angle if stem_angle is None else stem_angle
 
             if num_children == 2:
                 # If this tip is part of the trunk, keep one child as trunk with smaller angle
