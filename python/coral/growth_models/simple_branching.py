@@ -248,12 +248,10 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                 if avoid_radius > 0 and _too_close_to_existing(end_point, endpoints, avoid_radius):
                     # Skip this branch
                     pass
-                else:
-                    segments.append((tip_point, end_point))
-                    endpoints.append(end_point)
-                    new_tips.append((end_point, new_direction, is_trunk, generation_born, new_twist_angle))
-        
-        # Update tips for next iteration
+                    else:
+                        segments.append((tip_point, end_point))
+                        endpoints.append(end_point)
+                        new_tips.append((end_point, new_direction, is_trunk, iteration, new_twist_angle))        # Update tips for next iteration
         tips = new_tips
         
         # If no tips left, stop early
