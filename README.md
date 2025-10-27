@@ -104,7 +104,6 @@ The `grow_coral` function supports the following parameters:
 - **twist_rate** (float): Rotational twist in degrees per iteration around growth axis (default: 0.0)
 - **avoid_radius** (float): Minimum distance between branch endpoints to prevent crowding (default: 0.0)
 - **terminate_probability** (float): Probability (0-1) that a branch tip terminates and stops growing (default: 0.0)
-- **age_based_prune** (int): If > 0, branches older than this many generations are pruned (default: 0)
 
 ### Example with Advanced Parameters
 

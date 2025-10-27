@@ -156,18 +156,7 @@ def main():
     )
     print_coral_summary("9. TERMINATING (terminate_probability=0.2)", terminating)
     
-    # 10. With age-based pruning
-    pruned = grow_coral(
-        iterations=8,
-        branch_length=2.0,
-        branch_angle=25,
-        split_probability=0.7,
-        age_based_prune=3,
-        seed=42
-    )
-    print_coral_summary("10. AGE-BASED PRUNING (age_based_prune=3)", pruned)
-    
-    # 11. Complex combination
+    # 10. Complex combination
     complex_coral = grow_coral(
         iterations=8,
         branch_length=2.0,
@@ -183,12 +172,12 @@ def main():
         terminate_probability=0.05,
         seed=42
     )
-    print_coral_summary("11. COMPLEX (multiple parameters combined)", complex_coral)
+    print_coral_summary("10. COMPLEX (multiple parameters combined)", complex_coral)
     
     print("\n" + "=" * 70)
     print("✓ All parameters verified successfully!")
     print("=" * 70)
-    print("\nAll 8 new parameters are working:")
+    print("\nAll 7 new parameters are working:")
     print("  ✓ length_jitter - adds random variation to branch lengths")
     print("  ✓ angle_jitter - adds random variation to branch angles")
     print("  ✓ length_decay - gradually reduces branch length over generations")
@@ -196,7 +185,6 @@ def main():
     print("  ✓ avoid_radius - prevents branches from growing too close")
     print("  ✓ twist_rate - adds rotational twist to growth")
     print("  ✓ terminate_probability - randomly stops branch growth")
-    print("  ✓ age_based_prune - removes old branches")
     print("\nThese parameters can now be used in Grasshopper!")
 
 

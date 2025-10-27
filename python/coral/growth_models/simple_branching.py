@@ -18,7 +18,7 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                stem_generations=0, stem_angle=None,
                length_jitter=0.0, angle_jitter=0.0, length_decay=0.0,
                angle_scale=1.0, avoid_radius=0.0, twist_rate=0.0,
-               terminate_probability=0.0, age_based_prune=0.0):
+               terminate_probability=0.0):
     """
     Generate a branching coral structure.
     
@@ -65,11 +65,6 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     terminate_probability : float, optional
         Probability (0-1) that a branch tip terminates and stops growing
         instead of continuing.
-    age_based_prune : float, optional
-        Probability factor (0-1) controlling age-based pruning. Each
-        generation increases the chance of pruning by this factor (clamped to
-        100%), so older branches are more likely to be removed when the factor
-        is high.
     
     Returns
     -------
@@ -86,7 +81,6 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     angle_scale = max(0.0, float(angle_scale))
     avoid_radius = max(0.0, float(avoid_radius))
     terminate_probability = max(0.0, min(1.0, float(terminate_probability)))
-    age_based_prune = max(0.0, min(1.0, float(age_based_prune)))
     
     # Store all line segments and endpoints for collision detection
     segments = []
@@ -94,35 +88,13 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     
     # Active tips: each is (point, direction_vector, is_trunk, generation_born, twist_angle)
     # Direction vector is normalized (unit vector)
-    # generation_born tracks when this tip was created for age-based pruning
+    # generation_born tracks when this tip was created for length_decay
     # twist_angle accumulates rotational twist
     initial_direction = (0, 0, 1)  # Start growing upward
     tips = [(start, initial_direction, True, 0, 0.0)]  # start as trunk at generation 0
     
     for iteration in range(iterations):
         new_tips = []
-        
-        # Age-based pruning: probabilistically remove older tips
-        if age_based_prune > 0:
-            surviving_tips = []
-            for tip in tips:
-                pt, dir_vec, trunk, gen, twist = tip
-                age = iteration - gen
-                if age <= 0:
-                    surviving_tips.append(tip)
-                    continue
-
-                # The probability of surviving this single year is (1 - age_based_prune).
-                # The probability of surviving up to 'age' is (1 - age_based_prune) ** age.
-                survival_probability = (1.0 - age_based_prune) ** age
-                
-                # Prune if a random roll is greater than the survival chance.
-                if random.random() > survival_probability:
-                    continue
-
-                surviving_tips.append(tip)
-
-            tips = surviving_tips
         
         for tip_point, tip_direction, is_trunk, generation_born, twist_angle in tips:
             # Termination check

@@ -140,23 +140,6 @@ def test_terminate_probability():
         print("  ✓ terminate_probability parameter works (results may vary)")
 
 
-def test_age_based_prune():
-    """Test that age_based_prune removes old branches."""
-    print("\nTesting age_based_prune parameter...")
-    
-    # Without pruning
-    result1 = grow_coral(iterations=6, seed=42, age_based_prune=0, split_probability=0.8)
-    
-    # With probabilistic pruning (older branches more likely to be removed)
-    result2 = grow_coral(iterations=6, seed=42, age_based_prune=0.4, split_probability=0.8)
-
-    print(f"  Without pruning: {len(result1)} segments")
-    print(f"  With pruning (factor=0.4): {len(result2)} segments")
-    
-    # Pruning should reduce active tips and might affect total segments
-    print("  ✓ age_based_prune parameter works")
-
-
 def test_combined_parameters():
     """Test using multiple new parameters together."""
     print("\nTesting combined parameters...")
@@ -193,7 +176,6 @@ if __name__ == "__main__":
         test_avoid_radius()
         test_twist_rate()
         test_terminate_probability()
-        test_age_based_prune()
         test_combined_parameters()
         
         print("\n" + "=" * 60)
