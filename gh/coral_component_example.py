@@ -75,9 +75,9 @@ def _ensure_repo_python_on_path():
 
 _attempted_paths = _ensure_repo_python_on_path()
 
-# Import coral growth algorithm
+# Import coral growth algorithm module and force a reload so changes are picked up in GH
 try:
-    from coral.growth_models.simple_branching import grow_coral
+    import coral.growth_models.simple_branching as _simple_branching
 except ImportError as _e:
     msg = (
         "Could not import 'coral.growth_models.simple_branching'.\n"
@@ -86,6 +86,19 @@ except ImportError as _e:
         "Attempted locations:\n  - " + "\n  - ".join(_attempted_paths)
     )
     raise ImportError(msg)
+
+# Reload for CPython3 (Rhino 8) or IronPython fallback
+try:
+    import importlib  # CPython 3.x
+    _simple_branching = importlib.reload(_simple_branching)
+except Exception:
+    try:
+        # IronPython 2.7 reload
+        _simple_branching = reload(_simple_branching)  # type: ignore
+    except Exception:
+        pass
+
+grow_coral = _simple_branching.grow_coral
 import Rhino.Geometry as rg
 
 # Convert Grasshopper input to a plain (x, y, z) tuple at the boundary
