@@ -147,11 +147,11 @@ def test_age_based_prune():
     # Without pruning
     result1 = grow_coral(iterations=6, seed=42, age_based_prune=0, split_probability=0.8)
     
-    # With pruning (keep only last 3 generations)
-    result2 = grow_coral(iterations=6, seed=42, age_based_prune=3, split_probability=0.8)
-    
+    # With probabilistic pruning (older branches more likely to be removed)
+    result2 = grow_coral(iterations=6, seed=42, age_based_prune=0.4, split_probability=0.8)
+
     print(f"  Without pruning: {len(result1)} segments")
-    print(f"  With pruning (age=3): {len(result2)} segments")
+    print(f"  With pruning (factor=0.4): {len(result2)} segments")
     
     # Pruning should reduce active tips and might affect total segments
     print("  ✓ age_based_prune parameter works")
