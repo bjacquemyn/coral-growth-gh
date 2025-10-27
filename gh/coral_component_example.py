@@ -13,6 +13,14 @@ INPUTS:
   seed: int - Random seed for reproducibility (optional)
   stem_generations: int - Generations forced to single stem before branching (default: 0)
   stem_angle: float - Max deviation angle for the main stem in degrees (optional; default: use branch_angle)
+  length_jitter: float - Random variation factor for branch length (0-1, default: 0.0)
+  angle_jitter: float - Random variation factor for branch angle (0-1, default: 0.0)
+  length_decay: float - Multiplicative decay factor for branch length per generation (0-1, default: 0.0)
+  angle_scale: float - Scaling factor for branch angles (default: 1.0)
+  avoid_radius: float - Minimum distance between branch endpoints (default: 0.0)
+  twist_rate: float - Rotational twist rate in degrees per iteration (default: 0.0)
+  terminate_probability: float - Probability of branch tip termination (0-1, default: 0.0)
+  age_based_prune: int - Maximum age of branches in generations (default: 0, no pruning)
 
 OUTPUTS:
   lines: List of Curve objects (LineCurve) for visualization
@@ -161,6 +169,16 @@ try:
 except Exception:
     stem_angle_val = None
 
+# New parameters
+length_jitter_val = _as_prob(globals().get('length_jitter', None), 0.0)
+angle_jitter_val = _as_prob(globals().get('angle_jitter', None), 0.0)
+length_decay_val = _as_prob(globals().get('length_decay', None), 0.0)
+angle_scale_val = _as_float(globals().get('angle_scale', None), 1.0)
+avoid_radius_val = _as_float(globals().get('avoid_radius', None), 0.0)
+twist_rate_val = _as_float(globals().get('twist_rate', None), 0.0)
+terminate_probability_val = _as_prob(globals().get('terminate_probability', None), 0.0)
+age_based_prune_val = max(0, _as_int(globals().get('age_based_prune', None), 0))
+
 segments_raw = grow_coral(
     start=start_tuple,
     iterations=iterations_val,
@@ -170,6 +188,14 @@ segments_raw = grow_coral(
     seed=seed_val,
     stem_generations=stem_generations_val,
     stem_angle=stem_angle_val,
+    length_jitter=length_jitter_val,
+    angle_jitter=angle_jitter_val,
+    length_decay=length_decay_val,
+    angle_scale=angle_scale_val,
+    avoid_radius=avoid_radius_val,
+    twist_rate=twist_rate_val,
+    terminate_probability=terminate_probability_val,
+    age_based_prune=age_based_prune_val,
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
