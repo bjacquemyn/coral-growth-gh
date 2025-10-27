@@ -23,7 +23,8 @@ INPUTS:
   age_based_prune: int - Maximum age of branches in generations (default: 0, no pruning)
 
 OUTPUTS:
-  lines: List of Curve objects (LineCurve) for visualization
+  out: Primary output - List of Curve objects (LineCurve) for visualization
+  lines: Same as 'out' - List of Curve objects (LineCurve) for visualization
   segments: Alias of 'lines' for convenience (Curve list)
   segments_raw: List of raw segment data (tuples)
   end_segments: LineCurves that terminate the coral (no further branching)
@@ -221,8 +222,10 @@ for seg, curve in zip(segments_raw, lines):
             seen_end_points.add(endpoint)
 
 # Backward/compat outputs:
+# - 'out' is the primary output (same as 'lines' and 'segments')
 # - 'segments' outputs curves as well (for users already wiring this output into a Curve param)
 # - 'segments_raw' exposes the tuple data for debugging/analysis
+out = lines
 segments = lines
 segments_raw = segments_raw
 end_segments = end_segments_list

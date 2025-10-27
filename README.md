@@ -78,6 +78,56 @@ lines = [rg.Line(rg.Point3d(*seg[0]), rg.Point3d(*seg[1])) for seg in branches]
 
 **Why this pattern?** The coral growth algorithm uses plain Python tuples to stay library-agnostic. By converting Point3d to tuple at the component boundary, the script stays friendly to normal Grasshopper wires (Point inputs) while keeping the core function reusable in other contexts.
 
+## Available Parameters
+
+The `grow_coral` function supports the following parameters:
+
+### Basic Parameters
+- **start** (tuple): Starting point (x, y, z) for the coral base
+- **iterations** (int): Number of growth iterations (default: 5)
+- **branch_length** (float): Length of each branch segment (default: 2.0)
+- **branch_angle** (float): Maximum deviation angle in degrees (default: 25)
+- **split_probability** (float): Probability (0-1) that a branch splits into two (default: 0.7)
+- **seed** (int, optional): Random seed for reproducible results
+
+### Stem Control
+- **stem_generations** (int): Number of initial generations forced to grow as a single stem before branching (default: 0)
+- **stem_angle** (float, optional): Maximum deviation angle for the main stem. If not specified, uses `branch_angle`
+
+### Variation Parameters
+- **length_jitter** (float): Random variation factor for branch length, 0-1 (default: 0.0)
+- **angle_jitter** (float): Random variation factor for branch angle, 0-1 (default: 0.0)
+- **length_decay** (float): Multiplicative decay factor for branch length per generation, 0-1 (default: 0.0)
+- **angle_scale** (float): Scaling factor for all branch angles (default: 1.0)
+
+### Advanced Control
+- **twist_rate** (float): Rotational twist in degrees per iteration around growth axis (default: 0.0)
+- **avoid_radius** (float): Minimum distance between branch endpoints to prevent crowding (default: 0.0)
+- **terminate_probability** (float): Probability (0-1) that a branch tip terminates and stops growing (default: 0.0)
+- **age_based_prune** (int): If > 0, branches older than this many generations are pruned (default: 0)
+
+### Example with Advanced Parameters
+
+```python
+# Create a more complex coral with variation and constraints
+branches = grow_coral(
+    start=(0, 0, 0),
+    iterations=10,
+    branch_length=2.0,
+    branch_angle=30,
+    split_probability=0.7,
+    stem_generations=3,
+    stem_angle=5,          # Straight stem
+    length_jitter=0.2,     # 20% length variation
+    angle_jitter=0.3,      # 30% angle variation
+    length_decay=0.1,      # 10% decay per generation
+    twist_rate=5.0,        # 5° twist per iteration
+    terminate_probability=0.05,  # 5% chance to terminate
+    seed=42
+)
+```
+
+
 ### Understanding the stem_generations parameter
 
 The `stem_generations` parameter controls how many initial generations must grow as a single main stem before branching is allowed:
