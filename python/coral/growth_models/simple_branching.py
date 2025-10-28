@@ -18,7 +18,7 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                stem_generations=0, stem_angle=None,
                length_jitter=0.0, angle_jitter=0.0, length_decay=0.0,
                angle_scale=1.0, avoid_radius=0.0, twist_rate=0.0,
-               terminate_probability=0.0):
+               terminate_probability=0.0, debug_log=None):
     """
     Generate a branching coral structure.
     
@@ -71,9 +71,16 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     list of tuples
         List of line segments, each as ((x0,y0,z0), (x1,y1,z1)).
     """
+    if debug_log is not None and not hasattr(debug_log, "append"):
+        raise TypeError("debug_log must be a list-like object with an append method")
+
+    def _log(message):
+        if debug_log is not None:
+            debug_log.append(message)
+
     if seed is not None:
         random.seed(seed)
-    
+
     # Validate and clamp parameters
     length_jitter = max(0.0, min(1.0, float(length_jitter)))
     angle_jitter = max(0.0, min(1.0, float(angle_jitter)))
@@ -92,49 +99,89 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     # twist_angle accumulates rotational twist
     initial_direction = (0, 0, 1)  # Start growing upward
     tips = [(start, initial_direction, True, 0, 0.0)]  # start as trunk at generation 0
-    
+
+    _log("--- Coral growth trace ---")
+    _log(
+        "Initial tip at {} with direction {} (iterations={}, branch_length={:.3f})".format(
+            start, initial_direction, iterations, branch_length
+        )
+    )
+
     for iteration in range(iterations):
         new_tips = []
-        
+
+        _log("[Iteration {}] Active tips: {}".format(iteration, len(tips)))
+
         for tip_point, tip_direction, is_trunk, generation_born, twist_angle in tips:
+            _log(
+                "  Processing tip at {} (dir={}, trunk={}, generation_born={}, twist={:.3f})".format(
+                    tip_point, tip_direction, is_trunk, generation_born, twist_angle
+                )
+            )
             # Termination check
             if random.random() < terminate_probability:
+                _log("    Terminated by terminate_probability")
                 continue
-            
+
             # Decide if this tip should split
             # During stem generations, force single stem growth (no branching)
             if iteration < stem_generations:
                 # Stem generation: no branching allowed
                 num_children = 1
+                _log("    Stem generation forces single child")
             elif random.random() < split_probability:
                 # Create two child branches
                 num_children = 2
+                _log("    Tip splits into two children")
             else:
                 # Single branch continues
                 num_children = 1
+                _log("    Single continuation (no split)")
 
             # Calculate length for this iteration with jitter and decay
             current_length = branch_length
-            
+
             # Apply length decay based on generation depth
             generations_elapsed = iteration - generation_born
+            decay_factor = 1.0
             if length_decay > 0 and generations_elapsed > 0:
-                current_length *= (1.0 - length_decay) ** generations_elapsed
-            
+                decay_factor = (1.0 - length_decay) ** generations_elapsed
+                current_length *= decay_factor
+
             # Apply length jitter (random variation)
+            jitter_factor = 1.0
             if length_jitter > 0:
                 jitter_factor = 1.0 + (random.random() * 2 - 1) * length_jitter
                 current_length *= jitter_factor
 
+            _log(
+                "    Segment length {:.5f} (decay_factor={:.5f}, jitter_factor={:.5f}, generations_elapsed={})".format(
+                    current_length, decay_factor, jitter_factor, generations_elapsed
+                )
+            )
+
             # Determine angles to use
             trunk_angle = branch_angle if stem_angle is None else stem_angle
-            
+
             # Apply angle scaling
             trunk_angle *= angle_scale
             effective_branch_angle = branch_angle * angle_scale
 
             # Update twist angle for this iteration
             new_twist_angle = twist_angle + twist_rate
+
+            def _maybe_log_skip(label, end_point):
+                if avoid_radius > 0:
+                    nearest = _nearest_distance(end_point, endpoints)
+                    if nearest is None:
+                        nearest_text = "no prior endpoints"
+                    else:
+                        nearest_text = "{:.5f}".format(nearest)
+                    _log(
+                        "    {} skipped by avoid_radius (radius={:.3f}, nearest_distance={})".format(
+                            label, avoid_radius, nearest_text
+                        )
+                    )
 
             if num_children == 2:
                 # If this tip is part of the trunk, keep one child as trunk with smaller angle
@@ -153,14 +200,19 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                         tip_point[1] + new_dir_trunk[1] * current_length,
                         tip_point[2] + new_dir_trunk[2] * current_length
                     )
-                    
+
                     # Check avoid_radius constraint
                     if avoid_radius > 0 and _too_close_to_existing(end_trunk, endpoints, avoid_radius):
                         # Skip this branch but continue processing
-                        pass
+                        _maybe_log_skip("Trunk child", end_trunk)
                     else:
                         segments.append((tip_point, end_trunk))
                         endpoints.append(end_trunk)
+                        _log(
+                            "    Trunk child segment created to {} (length {:.5f})".format(
+                                end_trunk, current_length
+                            )
+                        )
                         new_tips.append((end_trunk, new_dir_trunk, True, generation_born, new_twist_angle))
 
                     # Branch child (wide angle)
@@ -168,20 +220,25 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                     if angle_jitter > 0:
                         jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
                         actual_branch_angle *= jitter_factor
-                    
-                    new_dir_branch = perturb_direction(tip_direction, max_angle=actual_branch_angle, 
+
+                    new_dir_branch = perturb_direction(tip_direction, max_angle=actual_branch_angle,
                                                       enforce_upward=True, twist_angle=new_twist_angle)
                     end_branch = (
                         tip_point[0] + new_dir_branch[0] * current_length,
                         tip_point[1] + new_dir_branch[1] * current_length,
                         tip_point[2] + new_dir_branch[2] * current_length
                     )
-                    
+
                     if avoid_radius > 0 and _too_close_to_existing(end_branch, endpoints, avoid_radius):
-                        pass
+                        _maybe_log_skip("Branch child", end_branch)
                     else:
                         segments.append((tip_point, end_branch))
                         endpoints.append(end_branch)
+                        _log(
+                            "    Branch child segment created to {} (length {:.5f})".format(
+                                end_branch, current_length
+                            )
+                        )
                         new_tips.append((end_branch, new_dir_branch, False, iteration, new_twist_angle))
                 else:
                     # Non-trunk tip splits into two branches (both non-trunk)
@@ -198,17 +255,23 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                             tip_point[1] + new_direction[1] * current_length,
                             tip_point[2] + new_direction[2] * current_length
                         )
-                        
+
                         if avoid_radius > 0 and _too_close_to_existing(end_point, endpoints, avoid_radius):
+                            _maybe_log_skip("Branch child", end_point)
                             continue
-                        
+
                         segments.append((tip_point, end_point))
                         endpoints.append(end_point)
+                        _log(
+                            "    Branch child segment created to {} (length {:.5f})".format(
+                                end_point, current_length
+                            )
+                        )
                         new_tips.append((end_point, new_direction, False, iteration, new_twist_angle))
             else:
                 # Single continuation: trunk stays trunk and uses trunk_angle; branches use branch_angle
                 angle = trunk_angle if is_trunk else effective_branch_angle
-                
+
                 if angle_jitter > 0:
                     jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
                     angle *= jitter_factor
@@ -220,22 +283,36 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                     tip_point[1] + new_direction[1] * current_length,
                     tip_point[2] + new_direction[2] * current_length
                 )
-                
+
                 if avoid_radius > 0 and _too_close_to_existing(end_point, endpoints, avoid_radius):
                     # Skip this branch
-                    pass
+                    _maybe_log_skip("Single child", end_point)
                 else:
                     segments.append((tip_point, end_point))
                     endpoints.append(end_point)
+                    _log(
+                        "    Single child segment created to {} (length {:.5f})".format(
+                            end_point, current_length
+                        )
+                    )
                     new_tips.append((end_point, new_direction, is_trunk, generation_born, new_twist_angle))
-        
+
         # Update tips for next iteration
         tips = new_tips
-        
+
+        _log(
+            "[Iteration {}] Completed with {} new tips (total segments={})".format(
+                iteration, len(tips), len(segments)
+            )
+        )
+
         # If no tips left, stop early
         if not tips:
+            _log("Growth stopped early because no tips remain")
             break
-    
+
+    _log("--- Coral growth complete (segments={}) ---".format(len(segments)))
+
     return segments
 
 
@@ -355,6 +432,28 @@ def _too_close_to_existing(point, existing_points, min_distance):
             return True
     
     return False
+
+
+def _nearest_distance(point, existing_points):
+    """Compute the distance from point to the nearest existing point."""
+    if not existing_points:
+        return None
+
+    px, py, pz = point
+    min_dist_sq = None
+
+    for ex, ey, ez in existing_points:
+        dx = px - ex
+        dy = py - ey
+        dz = pz - ez
+        dist_sq = dx * dx + dy * dy + dz * dz
+        if min_dist_sq is None or dist_sq < min_dist_sq:
+            min_dist_sq = dist_sq
+
+    if min_dist_sq is None:
+        return None
+
+    return math.sqrt(min_dist_sq)
 
 
 # Example usage for quick testing
