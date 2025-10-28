@@ -39,10 +39,16 @@ def _load_available_models():
             # of a ``ModuleInfo`` instance, so fall back to tuple indexing.
             is_pkg = bool(module_info[2])
 
+        module_name = getattr(module_info, "name", None)
+        if module_name is None:
+            # ``iter_modules`` returned a tuple so pull the name from the second
+            # element.  ``module_info`` is either a ``ModuleInfo`` instance or a
+            # ``(module_finder, name, ispkg)`` tuple.
+            module_name = module_info[1]
+
         if is_pkg:
             continue
 
-        module_name = module_info.name
         if module_name.startswith("_"):
             continue
 
