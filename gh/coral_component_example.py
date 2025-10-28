@@ -178,6 +178,27 @@ avoid_radius_val = _as_float(globals().get('avoid_radius', None), 0.0)
 twist_rate_val = _as_float(globals().get('twist_rate', None), 0.0)
 terminate_probability_val = _as_prob(globals().get('terminate_probability', None), 0.0)
 
+_debug_lines = []
+
+_debug_lines.append("=== Coral growth inputs ===")
+_debug_lines.append("start: {}".format(start_tuple))
+_debug_lines.append("iterations: {}".format(iterations_val))
+_debug_lines.append("branch_length: {:.6g}".format(branch_length_val))
+_debug_lines.append("branch_angle: {:.6g}".format(branch_angle_val))
+_debug_lines.append("split_probability: {:.6g}".format(split_prob_val))
+_debug_lines.append("seed: {}".format(seed_val if seed_val is not None else "<auto>"))
+_debug_lines.append("stem_generations: {}".format(stem_generations_val))
+_debug_lines.append("stem_angle: {}".format(
+    "<inherit>" if stem_angle_val is None else "{:.6g}".format(stem_angle_val)
+))
+_debug_lines.append("length_jitter: {:.6g}".format(length_jitter_val))
+_debug_lines.append("angle_jitter: {:.6g}".format(angle_jitter_val))
+_debug_lines.append("length_decay: {:.6g}".format(length_decay_val))
+_debug_lines.append("angle_scale: {:.6g}".format(angle_scale_val))
+_debug_lines.append("avoid_radius: {:.6g}".format(avoid_radius_val))
+_debug_lines.append("twist_rate: {:.6g}".format(twist_rate_val))
+_debug_lines.append("terminate_probability: {:.6g}".format(terminate_probability_val))
+
 segments_raw = grow_coral(
     start=start_tuple,
     iterations=iterations_val,
@@ -222,6 +243,14 @@ for seg, curve in zip(segments_raw, lines):
 # - 'out' is the primary output (same as 'lines' and 'segments')
 # - 'segments' outputs curves as well (for users already wiring this output into a Curve param)
 # - 'segments_raw' exposes the tuple data for debugging/analysis
+_debug_lines.append("=== Coral growth results ===")
+_debug_lines.append("segments generated: {}".format(len(segments_raw)))
+_debug_lines.append("terminal segments: {}".format(len(end_segments_list)))
+_debug_lines.append("terminal points: {}".format(len(end_points_list)))
+
+for _line in _debug_lines:
+    print(_line)
+
 out = lines
 segments = lines
 segments_raw = segments_raw
