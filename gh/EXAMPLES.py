@@ -187,32 +187,7 @@ segments = grow_coral(
 
 
 # ============================================================================
-# EXAMPLE 8: Young Coral (Only Recent Growth)
-# ============================================================================
-# Good for: Showing only active growth zones
-#
-# Grasshopper Inputs:
-#   start: Point
-#   iterations: 10
-#   branch_length: 2.0
-#   branch_angle: 30
-#   split_probability: 0.8
-#   age_based_prune: 3
-#   seed: 42
-
-segments = grow_coral(
-    start=start_tuple,
-    iterations=10,
-    branch_length=2.0,
-    branch_angle=30,
-    split_probability=0.8,
-    age_based_prune=3,  # Keep only last 3 generations
-    seed=42
-)
-
-
-# ============================================================================
-# EXAMPLE 9: Complex Realistic Coral
+# EXAMPLE 8: Complex Realistic Coral
 # ============================================================================
 # Good for: Most natural-looking result combining multiple effects
 #
@@ -251,7 +226,7 @@ segments = grow_coral(
 
 
 # ============================================================================
-# EXAMPLE 10: Parametric Study Setup
+# EXAMPLE 9: Parametric Study Setup
 # ============================================================================
 # Good for: Exploring parameter space in Grasshopper
 # Use number sliders for each parameter
@@ -271,7 +246,6 @@ segments = grow_coral(
 #   avoid_radius: float slider (0.0-3.0)
 #   twist_rate: float slider (0-30)
 #   terminate_probability: float slider (0.0-0.3)
-#   age_based_prune: int slider (0-5)
 #   seed: int slider (0-1000)
 
 segments = grow_coral(
@@ -289,7 +263,6 @@ segments = grow_coral(
     avoid_radius=avoid_radius,
     twist_rate=twist_rate,
     terminate_probability=terminate_probability,
-    age_based_prune=age_based_prune,
     seed=seed if seed > 0 else None
 )
 
@@ -314,7 +287,6 @@ segments = grow_coral(
 4. Performance:
    - Higher iterations and split_probability = more segments = slower
    - Use avoid_radius sparingly (it checks all existing endpoints)
-   - age_based_prune can limit segment count for high iterations
 
 5. Natural-Looking Results:
    - Combine length_jitter + angle_jitter for organic variation
