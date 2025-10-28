@@ -199,6 +199,8 @@ _debug_lines.append("avoid_radius: {:.6g}".format(avoid_radius_val))
 _debug_lines.append("twist_rate: {:.6g}".format(twist_rate_val))
 _debug_lines.append("terminate_probability: {:.6g}".format(terminate_probability_val))
 
+growth_debug_lines = []
+
 segments_raw = grow_coral(
     start=start_tuple,
     iterations=iterations_val,
@@ -215,6 +217,7 @@ segments_raw = grow_coral(
     avoid_radius=avoid_radius_val,
     twist_rate=twist_rate_val,
     terminate_probability=terminate_probability_val,
+    debug_log=growth_debug_lines,
 )
 
 # Convert output tuples back to Rhino geometry for Grasshopper display
@@ -247,6 +250,10 @@ _debug_lines.append("=== Coral growth results ===")
 _debug_lines.append("segments generated: {}".format(len(segments_raw)))
 _debug_lines.append("terminal segments: {}".format(len(end_segments_list)))
 _debug_lines.append("terminal points: {}".format(len(end_points_list)))
+
+if growth_debug_lines:
+    _debug_lines.append("=== Growth trace ===")
+    _debug_lines.extend(growth_debug_lines)
 
 for _line in _debug_lines:
     print(_line)
