@@ -33,7 +33,13 @@ def _load_available_models():
     package_name = __name__
 
     for module_info in pkgutil.iter_modules(__path__):  # type: ignore[name-defined]
-        if module_info.ispkg:
+        is_pkg = getattr(module_info, "ispkg", None)
+        if is_pkg is None:
+            # On some Python versions ``iter_modules`` yields a bare tuple instead
+            # of a ``ModuleInfo`` instance, so fall back to tuple indexing.
+            is_pkg = bool(module_info[2])
+
+        if is_pkg:
             continue
 
         module_name = module_info.name
