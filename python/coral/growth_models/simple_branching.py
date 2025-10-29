@@ -18,7 +18,7 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                stem_generations=0, stem_angle=None,
                length_jitter=0.0, angle_jitter=0.0, length_decay=0.0,
                angle_scale=1.0, avoid_radius=0.0, twist_rate=0.0,
-               terminate_probability=0.0, debug_log=None):
+               terminate_probability=0.0, mean_branch_number=None, debug_log=None):
     """
     Generate a branching coral structure.
     
@@ -65,6 +65,12 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     terminate_probability : float, optional
         Probability (0-1) that a branch tip terminates and stops growing
         instead of continuing.
+    mean_branch_number : float or None, optional
+        If provided, uses a Poisson-like discrete distribution centered around
+        this mean to decide how many children a tip spawns (1, 2, 3, ...).
+        Values <= 0 are treated as None. When None, the legacy behavior is
+        used: a tip either continues as one child or splits into two children
+        based on split_probability.
     
     Returns
     -------
@@ -88,6 +94,12 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
     angle_scale = max(0.0, float(angle_scale))
     avoid_radius = max(0.0, float(avoid_radius))
     terminate_probability = max(0.0, min(1.0, float(terminate_probability)))
+    try:
+        mean_branch_number = float(mean_branch_number) if mean_branch_number is not None else None
+        if mean_branch_number is not None and mean_branch_number <= 0:
+            mean_branch_number = None
+    except Exception:
+        mean_branch_number = None
     
     # Store all line segments and endpoints for collision detection
     segments = []
@@ -123,20 +135,27 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                 _log("    Terminated by terminate_probability")
                 continue
 
-            # Decide if this tip should split
+            # Decide how many children this tip should spawn
             # During stem generations, force single stem growth (no branching)
             if iteration < stem_generations:
-                # Stem generation: no branching allowed
                 num_children = 1
                 _log("    Stem generation forces single child")
-            elif random.random() < split_probability:
-                # Create two child branches
-                num_children = 2
-                _log("    Tip splits into two children")
             else:
-                # Single branch continues
-                num_children = 1
-                _log("    Single continuation (no split)")
+                if mean_branch_number is None:
+                    # Legacy behavior: split into two or continue as one
+                    if random.random() < split_probability:
+                        num_children = 2
+                        _log("    Tip splits into two children (legacy)")
+                    else:
+                        num_children = 1
+                        _log("    Single continuation (legacy, no split)")
+                else:
+                    # Sample from a Poisson-like distribution with given mean
+                    num_children = _sample_poisson(max(1e-9, mean_branch_number))
+                    # Ensure at least 1 child (termination handled separately)
+                    if num_children < 1:
+                        num_children = 1
+                    _log("    Tip spawns {} children (mean_branch_number={:.3f})".format(num_children, mean_branch_number))
 
             # Calculate length for this iteration with jitter and decay
             current_length = branch_length
@@ -183,27 +202,26 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                         )
                     )
 
-            if num_children == 2:
-                # If this tip is part of the trunk, keep one child as trunk with smaller angle
+            if num_children >= 2:
+                # If this tip is part of the trunk, keep exactly one child as trunk with smaller angle
                 if is_trunk:
                     # Trunk child (continues upward-ish)
-                    # Apply angle jitter
                     actual_trunk_angle = trunk_angle
                     if angle_jitter > 0:
                         jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
                         actual_trunk_angle *= jitter_factor
-                    
-                    new_dir_trunk = perturb_direction(tip_direction, max_angle=actual_trunk_angle, 
-                                                     enforce_upward=True, twist_angle=new_twist_angle)
+
+                    new_dir_trunk = perturb_direction(
+                        tip_direction, max_angle=actual_trunk_angle,
+                        enforce_upward=True, twist_angle=new_twist_angle
+                    )
                     end_trunk = (
                         tip_point[0] + new_dir_trunk[0] * current_length,
                         tip_point[1] + new_dir_trunk[1] * current_length,
                         tip_point[2] + new_dir_trunk[2] * current_length
                     )
 
-                    # Check avoid_radius constraint
                     if avoid_radius > 0 and _too_close_to_existing(end_trunk, endpoints, avoid_radius):
-                        # Skip this branch but continue processing
                         _maybe_log_skip("Trunk child", end_trunk)
                     else:
                         segments.append((tip_point, end_trunk))
@@ -215,23 +233,28 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                         )
                         new_tips.append((end_trunk, new_dir_trunk, True, generation_born, new_twist_angle))
 
-                    # Branch child (wide angle)
-                    actual_branch_angle = effective_branch_angle
-                    if angle_jitter > 0:
-                        jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
-                        actual_branch_angle *= jitter_factor
+                    # Additional branch children (wide angle)
+                    branch_children = max(0, num_children - 1)
+                    for _ in range(branch_children):
+                        actual_branch_angle = effective_branch_angle
+                        if angle_jitter > 0:
+                            jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
+                            actual_branch_angle *= jitter_factor
 
-                    new_dir_branch = perturb_direction(tip_direction, max_angle=actual_branch_angle,
-                                                      enforce_upward=True, twist_angle=new_twist_angle)
-                    end_branch = (
-                        tip_point[0] + new_dir_branch[0] * current_length,
-                        tip_point[1] + new_dir_branch[1] * current_length,
-                        tip_point[2] + new_dir_branch[2] * current_length
-                    )
+                        new_dir_branch = perturb_direction(
+                            tip_direction, max_angle=actual_branch_angle,
+                            enforce_upward=True, twist_angle=new_twist_angle
+                        )
+                        end_branch = (
+                            tip_point[0] + new_dir_branch[0] * current_length,
+                            tip_point[1] + new_dir_branch[1] * current_length,
+                            tip_point[2] + new_dir_branch[2] * current_length
+                        )
 
-                    if avoid_radius > 0 and _too_close_to_existing(end_branch, endpoints, avoid_radius):
-                        _maybe_log_skip("Branch child", end_branch)
-                    else:
+                        if avoid_radius > 0 and _too_close_to_existing(end_branch, endpoints, avoid_radius):
+                            _maybe_log_skip("Branch child", end_branch)
+                            continue
+
                         segments.append((tip_point, end_branch))
                         endpoints.append(end_branch)
                         _log(
@@ -241,15 +264,17 @@ def grow_coral(start=(0, 0, 0), iterations=5, branch_length=2.0,
                         )
                         new_tips.append((end_branch, new_dir_branch, False, iteration, new_twist_angle))
                 else:
-                    # Non-trunk tip splits into two branches (both non-trunk)
-                    for _ in range(2):
+                    # Non-trunk tip spawns multiple branches (all non-trunk)
+                    for _ in range(num_children):
                         actual_branch_angle = effective_branch_angle
                         if angle_jitter > 0:
                             jitter_factor = 1.0 + (random.random() * 2 - 1) * angle_jitter
                             actual_branch_angle *= jitter_factor
-                        
-                        new_direction = perturb_direction(tip_direction, max_angle=actual_branch_angle, 
-                                                         enforce_upward=True, twist_angle=new_twist_angle)
+
+                        new_direction = perturb_direction(
+                            tip_direction, max_angle=actual_branch_angle,
+                            enforce_upward=True, twist_angle=new_twist_angle
+                        )
                         end_point = (
                             tip_point[0] + new_direction[0] * current_length,
                             tip_point[1] + new_direction[1] * current_length,
@@ -399,6 +424,24 @@ def normalize(vector):
     if magnitude < 1e-10:
         return (0, 0, 1)  # Default fallback
     return tuple(c / magnitude for c in vector)
+
+
+def _sample_poisson(lmbda):
+    """Sample a Poisson-distributed nonnegative integer with mean lmbda.
+
+    Uses the classic Knuth algorithm; efficient for small to moderate means
+    which are typical for branching counts. For our use we cap the minimum at 0
+    and let the caller enforce any lower bounds.
+    """
+    if lmbda <= 0:
+        return 0
+    L = math.exp(-lmbda)
+    k = 0
+    p = 1.0
+    while p > L:
+        k += 1
+        p *= random.random()
+    return k - 1
 
 
 def _too_close_to_existing(point, existing_points, min_distance):

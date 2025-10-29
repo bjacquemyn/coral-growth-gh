@@ -20,6 +20,7 @@ INPUTS:
   avoid_radius: float - Minimum distance between branch endpoints (default: 0.0)
   twist_rate: float - Rotational twist rate in degrees per iteration (default: 0.0)
   terminate_probability: float - Probability of branch tip termination (0-1, default: 0.0)
+  mean_branch_number: float - Mean number of children per node (optional; >0 enables multi-branching)
 
 OUTPUTS:
   out: Primary output - List of Curve objects (LineCurve) for visualization
@@ -178,6 +179,18 @@ avoid_radius_val = _as_float(globals().get('avoid_radius', None), 0.0)
 twist_rate_val = _as_float(globals().get('twist_rate', None), 0.0)
 terminate_probability_val = _as_prob(globals().get('terminate_probability', None), 0.0)
 
+# New branching multiplicity parameter (optional)
+def _as_mean_branches(value):
+    try:
+        if value in (None, "", False):
+            return None
+        v = float(value)
+        return None if v <= 0 else v
+    except Exception:
+        return None
+
+mean_branch_number_val = _as_mean_branches(globals().get('mean_branch_number', None))
+
 _debug_lines = []
 
 _debug_lines.append("=== Coral growth inputs ===")
@@ -198,6 +211,9 @@ _debug_lines.append("angle_scale: {:.6g}".format(angle_scale_val))
 _debug_lines.append("avoid_radius: {:.6g}".format(avoid_radius_val))
 _debug_lines.append("twist_rate: {:.6g}".format(twist_rate_val))
 _debug_lines.append("terminate_probability: {:.6g}".format(terminate_probability_val))
+_debug_lines.append("mean_branch_number: {}".format(
+    "<legacy>" if mean_branch_number_val is None else "{:.6g}".format(mean_branch_number_val)
+))
 
 growth_debug_lines = []
 
@@ -217,6 +233,7 @@ segments_raw = grow_coral(
     avoid_radius=avoid_radius_val,
     twist_rate=twist_rate_val,
     terminate_probability=terminate_probability_val,
+    mean_branch_number=mean_branch_number_val,
     debug_log=growth_debug_lines,
 )
 
